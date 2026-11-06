@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F5F1EA">
+<title>Tes résultats · Test d'anglais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Palette : crème + sauge (froid) / terracotta (chaud), deux teintes complémentaires.
+     Uniquement des aplats, aucun dégradé. */
+  :root {
+    --bg: #F5F1EA;          /* crème */
+    --card: #FFFDF9;        /* blanc cassé */
+    --ink: #2F3A34;         /* vert ardoise profond */
+    --muted: #5F6861;       /* gris sauge */
+    --line: #E8E2D7;        /* sable clair */
+    --track: #EFEAE1;
+
+    --sage: #4F7A65;        /* couleur principale */
+    --sage-hover: #436A57;
+    --sage-soft: #E3ECE5;
+    --clay: #C9775A;        /* complémentaire */
+    --clay-text: #96503A;
+    --clay-soft: #F6E4DA;
+    --sand: #C7A15F;
+    --sky: #6F8FA6;
+
+    --radius: 26px;
+    --shadow: 0 1px 2px rgba(47,58,52,.04), 0 10px 30px -18px rgba(47,58,52,.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 16px 28px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* En-tête */
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--muted); margin-bottom: 48px; }
+  .brand .mark { width: 32px; height: 32px; border-radius: 11px; background: var(--sage); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+
+  main { width: 100%; max-width: 520px; }
+
+  /* Écran de recherche */
+  .intro { text-align: center; margin-bottom: 28px; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--clay-soft); color: var(--clay-text); font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--clay); }
+  h1 { font-weight: 800; font-size: clamp(30px, 7vw, 40px); line-height: 1.15; letter-spacing: -.02em; }
+  h1 span { color: var(--sage); }
+  .lead { color: var(--muted); margin: 14px auto 0; max-width: 400px; font-size: 16px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+  form.card { padding: 24px; display: grid; gap: 12px; }
+  label { font-size: 14px; font-weight: 700; color: var(--ink); }
+  input[type=email] {
+    width: 100%; font: inherit; font-size: 16px; padding: 15px 18px; border-radius: 16px;
+    border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); outline: none;
+    transition: border-color .15s, background-color .15s, box-shadow .15s;
+  }
+  input[type=email]::placeholder { color: #A3A9A2; }
+  input[type=email]:focus { border-color: var(--sage); background: #fff; box-shadow: 0 0 0 4px var(--sage-soft); }
+
+  button { font: inherit; cursor: pointer; }
+  button.primary {
+    margin-top: 4px; font-weight: 700; font-size: 16px; padding: 15px 18px; border: 0; border-radius: 16px;
+    color: #fff; background: var(--sage); transition: background-color .15s, transform .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  button.primary:hover { background: var(--sage-hover); }
+  button.primary:active { transform: scale(.985); }
+  button.primary:disabled { opacity: .7; cursor: wait; }
+  button:focus-visible { outline: 3px solid var(--sage-soft); outline-offset: 2px; }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.4); border-top-color: #fff; animation: spin .8s linear infinite; display: none; }
+  button.primary:disabled .spin { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error { display: none; color: var(--clay-text); background: var(--clay-soft); font-size: 14px; font-weight: 600; border-radius: 14px; padding: 12px 14px; }
+  .error.show { display: block; }
+
+  .privacy { font-size: 13px; color: var(--muted); margin: 18px auto 0; max-width: 360px; text-align: center; text-wrap: balance; }
+  .privacy svg { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+
+  /* Écran de résultat */
+  #result { display: none; }
+  #result.show { display: block; animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  .hello { text-align: center; margin-bottom: 20px; }
+  .hello p { color: var(--muted); font-size: 15px; }
+  .hello h2 { font-size: clamp(24px, 6vw, 30px); font-weight: 800; letter-spacing: -.02em; margin-top: 2px; }
+
+  .hero { padding: 32px 24px 28px; text-align: center; }
+  .ring { position: relative; width: 184px; height: 184px; margin: 0 auto 22px; }
+  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; display: block; }
+  .ring circle { fill: none; stroke-width: 14; stroke-linecap: round; }
+  .ring .track { stroke: var(--track); }
+  .ring .bar { stroke: var(--sage); stroke-dasharray: 534.07; stroke-dashoffset: 534.07; transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1) .15s; }
+  .ring .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring .num b { font-size: 52px; line-height: 1; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .ring .num span { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+
+  .level { display: inline-flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--sage-soft); color: var(--sage-hover); font-weight: 700; font-size: 15px; }
+  .level b { background: var(--sage); color: #fff; border-radius: 999px; padding: 3px 12px; font-weight: 800; }
+  .level.plain { padding: 8px 16px; }
+  .date { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .note { margin: 20px auto 0; max-width: 360px; display: flex; gap: 10px; align-items: flex-start; text-align: left; background: var(--clay-soft); color: var(--clay-text); border-radius: 16px; padding: 12px 14px; font-size: 13.5px; font-weight: 600; line-height: 1.45; }
+  .note svg { flex: none; margin-top: 1px; }
+
+  .row .tag { font-size: 12.5px; font-weight: 700; color: var(--clay-text); background: var(--clay-soft); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  .row .tag.soft { color: var(--muted); background: var(--track); }
+  .row.estime .meter i { opacity: .45; }
+  .note.info { background: var(--bg); color: var(--muted); }
+  .hero.noring .ring { display: none; }
+
+
+  .block { margin-top: 14px; padding: 24px; }
+  .block h3 { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+
+  .rows { display: grid; gap: 18px; }
+  .row .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 15px; }
+  .row .name { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .row .name i { width: 10px; height: 10px; border-radius: 4px; background: var(--c); flex: none; }
+  .row .val { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .row .val b { color: var(--ink); font-weight: 800; }
+  .meter { height: 10px; background: var(--track); border-radius: 10px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; border-radius: 10px; background: var(--c); transition: width 1.1s cubic-bezier(.2,.8,.2,1) .3s; }
+
+  .feedback { background: var(--sage-soft); border-color: transparent; box-shadow: none; }
+  .feedback h3 { color: var(--sage-hover); }
+  .feedback p { font-size: 15.5px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+  button.ghost { white-space: nowrap; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  button.ghost {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 15px; font-weight: 700; padding: 13px 14px; border-radius: 16px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+    transition: border-color .15s, color .15s, background-color .15s;
+  }
+  button.ghost:hover { border-color: var(--sage); color: var(--sage); }
+
+  footer { margin-top: auto; padding-top: 44px; font-size: 12.5px; color: var(--muted); }
+
+  @media (max-width: 440px) { .actions { grid-template-columns: 1fr; } }
+  @media (max-width: 380px) { form.card, .block, .hero { padding-left: 20px; padding-right: 20px; } }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .actions, .brand, footer { display: none !important; }
+    .card { box-shadow: none; break-inside: avoid; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+  <div class="brand"><span class="mark">A</span> Test d'anglais · Résultats</div>
+
+  <main>
+    <section id="lookup">
+      <div class="intro">
+        <div class="badge"><span class="dot"></span> Résultats disponibles</div>
+        <h1>Découvre ton <span>résultat</span></h1>
+        <p class="lead">Saisis l'adresse email utilisée lors de ton inscription pour voir ton score et ton niveau.</p>
+      </div>
+      <form class="card" id="form" novalidate>
+        <label for="email">Adresse email</label>
+        <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="prenom.nom@exemple.com" required autofocus>
+        <div class="error" id="err" role="alert"></div>
+        <button class="primary" id="btn" type="submit"><span class="spin" aria-hidden="true"></span><span id="btnLabel">Voir mon résultat</span></button>
+      </form>
+      <p class="privacy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Seul ton résultat est affiché. Rien n'est conservé par cette page.
+      </p>
+    </section>
+
+    <section id="result" aria-live="polite">
+      <div class="hello"><p id="helloLead">Bravo pour ta participation</p><h2 id="hello"></h2></div>
+
+
+      <div class="card hero" id="hero">
+        <div class="ring" role="img" id="ringLabel">
+          <svg viewBox="0 0 190 190" aria-hidden="true">
+            <circle class="track" cx="95" cy="95" r="85"/>
+            <circle class="bar" id="bar" cx="95" cy="95" r="85"/>
+          </svg>
+          <div class="num" aria-hidden="true"><b id="score">0</b><span>sur 100</span></div>
+        </div>
+        <div class="level" id="level"></div>
+        <div class="date" id="date"></div>
+        <div class="note" id="note" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span id="noteText"></span>
+        </div>
+      </div>
+
+      <div class="card block" id="sections" hidden>
+        <h3>Détail par compétence</h3>
+        <div class="rows" id="rows"></div>
+      </div>
+
+      <div class="card block feedback" id="fb" hidden>
+        <h3>Commentaire du correcteur</h3>
+        <p id="fbtext"></p>
+      </div>
+
+      <div class="actions">
+        <button class="ghost" id="print" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+          Enregistrer en PDF
+        </button>
+        <button class="ghost" id="back" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>
+          Autre adresse
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>© Test d'anglais</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const form = $('form'), err = $('err'), btn = $('btn');
+const C = 534.07; // circonférence de l'anneau (2π·85)
+
+// Couleur par compétence (aplats harmonisés)
+const COLORS = { reading: 'var(--sage)', structure: 'var(--clay)', writing: 'var(--sand)', speaking: 'var(--sky)' };
+const FALLBACK = ['var(--sage)', 'var(--clay)', 'var(--sand)', 'var(--sky)'];
+const fmt = n => String(Math.round(n * 10) / 10).replace('.', ',');
+// « DJEKET JEAN joel » → « Djeket Jean Joel »
+const titleCase = s => s.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+
+function showError(msg) { err.textContent = msg; err.classList.add('show'); }
+function setLoading(on) { btn.disabled = on; $('btnLabel').textContent = on ? 'Recherche…' : 'Voir mon résultat'; }
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  err.classList.remove('show');
+  const email = $('email').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Saisis une adresse email valide.');
+  setLoading(true);
+  try {
+    const r = await fetch('/api/result', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    let j = {};
+    try { j = await r.json(); } catch {}
+    if (!r.ok) throw new Error(j.error || 'Une erreur est survenue. Réessaie dans un instant.');
+    render(j);
+  } catch (ex) {
+    showError(ex instanceof TypeError ? 'Connexion impossible. Vérifie ta connexion et réessaie.' : ex.message);
+  } finally {
+    setLoading(false);
+  }
+});
+
+function render(d) {
+  $('lookup').style.display = 'none';
+
+  const nom = titleCase(String(d.nom || '').trim().replace(/\s+/g, ' '));
+  $('hello').textContent = nom || 'Voici ton résultat';
+  $('helloLead').textContent = d.exclu || d.base === 'defaut' ? 'Merci pour ta participation' : 'Bravo pour ta participation';
+  $('date').textContent = d.date ? 'Test passé le ' + String(d.date).split(' ')[0] : '';
+
+  const score = Math.max(0, Math.min(100, Number(d.score) || 0));
+  const sansReponse = d.base === 'defaut';
+  $('hero').classList.toggle('noring', sansReponse);
+  $('ringLabel').setAttribute('aria-label', 'Score : ' + fmt(score) + ' sur 100');
+
+  const lvl = $('level'); lvl.textContent = ''; lvl.className = 'level';
+  lvl.append('Niveau', Object.assign(document.createElement('b'), { textContent: d.niveau || 'Débutant' }));
+
+  // Explication du résultat (une seule phrase par situation)
+  const sections = d.sections || [];
+  const msgs = [];
+  if (d.exclu) msgs.push('Session interrompue par la surveillance' + (d.motif ? ' : ' + d.motif.replace(/\.$/, '') : '') + '.'
+    + (sansReponse ? '' : ' Ton résultat est calculé à partir des réponses données avant l’interruption.'));
+  if (sansReponse) msgs.push("Aucune réponse n'a été enregistrée " + (d.exclu ? "avant l'interruption" : 'pendant ton test') + " : le niveau de départ t'est attribué.");
+  if (d.base === 'estime') msgs.push('Certaines parties n’ont pas été faites : elles sont estimées à partir de tes autres résultats.');
+  if (d.passages > 1) msgs.push('Résultat consolidé à partir de tes ' + d.passages + ' passages.');
+  $('noteText').textContent = msgs.join(' ');
+  $('note').hidden = !msgs.length;
+  $('note').classList.toggle('info', !d.exclu);
+
+  const rows = $('rows'); rows.textContent = '';
+  sections.forEach((s, idx) => {
+    const row = document.createElement('div'); row.className = 'row' + (s.estime ? ' estime' : '');
+    row.style.setProperty('--c', COLORS[s.key] || FALLBACK[idx % FALLBACK.length]);
+    row.innerHTML = '<div class="top"><span class="name"><i></i><span></span></span><span class="val"></span></div><div class="meter"><i></i></div>';
+    row.querySelector('.name span').textContent = s.label;
+    if (s.estime) row.querySelector('.name').append(Object.assign(document.createElement('span'), { className: 'tag soft', textContent: 'estimé' }));
+    row.querySelector('.val').append(Object.assign(document.createElement('b'), { textContent: fmt(s.score) }), ' / ' + s.max);
+    const pct = s.max ? (s.score / s.max) * 100 : 0;
+    row.querySelector('.meter i').dataset.w = Math.max(0, Math.min(100, pct));
+    rows.appendChild(row);
+  });
+  $('sections').hidden = !sections.length;
+
+  $('fbtext').textContent = d.correction || '';
+  $('fb').hidden = !d.correction;
+
+  $('result').classList.add('show');
+  window.scrollTo({ top: 0 });
+
+  // Animations
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    $('bar').style.strokeDashoffset = C * (1 - score / 100);
+    document.querySelectorAll('.meter i').forEach(i => i.style.width = i.dataset.w + '%');
+  }));
+  const el = $('score');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = fmt(score); return; }
+  const t0 = performance.now(), dur = 1300;
+  (function tick(t) {
+    const p = Math.min(1, Math.max(0, (t - t0) / dur)), ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = p < 1 ? Math.round(score * ease) : fmt(score);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+$('back').onclick = () => {
+  $('result').classList.remove('show'); $('lookup').style.display = '';
+  $('bar').style.strokeDashoffset = C; $('score').textContent = '0';
+  document.querySelectorAll('.meter i').forEach(i => i.style.width = '0');
+  $('email').value = ''; $('email').focus();
+};
+$('print').onclick = () => window.print();
+</script>
+</body>
+</html>

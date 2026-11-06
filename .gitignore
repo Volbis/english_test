@@ -1,0 +1,6 @@
+node_modules
+.vercel
+export.csv
+export.tsv
+data/*.html
+data/*.xlsx
