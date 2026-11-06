@@ -9,7 +9,7 @@
 ## Règles appliquées (100 % des personnes ont un résultat)
 - **Sections passées** : Reading > 0, Structure > 1,3 (1/24 = valeur enregistrée quand la section n'est pas faite), Writing noté.
 - **Notes de Writing** : `data/writing-grades.json` (113 textes notés /30 par Claude, modifiables). Une note saisie dans la colonne Writing /30 de la feuille est prioritaire.
-- **Plusieurs emails pour une même personne** (même nom) : passages fusionnés, meilleure note par section.
+- **Plusieurs emails pour une même personne** : regroupés automatiquement si le nom est identique (ordre libre), ou via `data/fusions.json` si le nom diffère. Tous les emails renvoient le même résultat (meilleure note par section) et le même nom.
 - **Section manquante** : estimée par régression à partir des sections faites (calibrée sur les personnes complètes) et marquée « estimé ».
 - **Score final /100** = (Reading + Structure + Writing) / 90 × 100. **Niveau** : < 50 Débutant · 50–79,9 Intermédiaire · ≥ 80 Avancé.
 - **Exclus** : même calcul, avec la mention « Session interrompue » et le motif.

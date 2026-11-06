@@ -139,6 +139,15 @@ attempts.forEach((a, i) => {
     if (k in firstBy) parent[root(i)] = root(firstBy[k]); else firstBy[k] = i;
   }
 });
+// Fusions manuelles (noms différents d'un compte à l'autre) : data/fusions.json
+const fusionsFile = path.join(path.dirname(input), 'fusions.json');
+const fusions = fs.existsSync(fusionsFile) ? (JSON.parse(fs.readFileSync(fusionsFile, 'utf8')).groupes || []) : [];
+const byEmail = Object.fromEntries(attempts.map((a, i) => [a.email, i]));
+const fusionInconnus = [];
+for (const g of fusions) {
+  const ids = g.map(e => String(e).trim().toLowerCase()).filter(e => (e in byEmail) || !fusionInconnus.push(e)).map(e => byEmail[e]);
+  for (const i of ids.slice(1)) parent[root(i)] = root(ids[0]);
+}
 const groups = {};
 attempts.forEach((a, i) => (groups[root(i)] ||= []).push(a));
 
@@ -221,7 +230,9 @@ for (const p of persons) {
   if (p.list.length > 1) rec.passages = p.list.length;
   if (p.exclu) { rec.exclu = true; rec.motif = p.motif; }
   if (p.correction) rec.correction = p.correction;
-  for (const a of p.list) out[a.email] = { nom: a.nom, ...rec };
+  // Même nom affiché quel que soit l'email : la forme la plus complète
+  const nom = p.list.map(a => a.nom).sort((x, y) => y.split(' ').length - x.split(' ').length || y.length - x.length)[0];
+  for (const a of p.list) out[a.email] = { nom, ...rec };
 }
 
 fs.mkdirSync('data', { recursive: true });
@@ -238,4 +249,5 @@ console.log(`  Bases : ${stats.complet} complètes, ${stats.estime} avec section
 console.log(`  ${stats.fusions} personne(s) inscrite(s) sous plusieurs emails fusionnée(s) · ${stats.exclus} exclue(s) avec résultat attribué.`);
 console.log(`  Régression calibrée sur ${complete.length} personnes complètes · écart moyen d'estimation (sur 30) : Reading ±${err.R.toFixed(1)}, Structure ±${err.S.toFixed(1)}, Writing ±${err.W.toFixed(1)}.`);
 console.log(`  Niveaux (par personne) : ${Object.entries(dist).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
+if (fusionInconnus.length) console.warn(`⚠ fusions.json : email(s) absent(s) de la base : ${fusionInconnus.join(', ')}`);
 if (sansNote.length) console.warn(`⚠ ${sansNote.length} Writing rendu(s) sans note (à ajouter dans writing-grades.json) : ${sansNote.slice(0, 5).join(', ')}`);

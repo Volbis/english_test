@@ -1,0 +1,9 @@
+{
+ "_info": "Emails appartenant à une même personne, quand le nom diffère d'un compte à l'autre. Les noms écrits à l'identique (dans n'importe quel ordre) sont déjà regroupés automatiquement. Ajoute un groupe par ligne, puis relance node scripts/build-data.mjs data/Sheet1.html.",
+ "groupes": [
+  ["angesupernova@gmail.com", "angeleroiangenovs@gmail.com"],
+  ["tijaniabdoul92@gmail.com", "mifaabdoul@gmail.com"],
+  ["dibychrys@gmail.com", "kangahchrys@gmail.com"],
+  ["kouakoujosue378@gmail.com", "kouakoushiphrajosue@gmail.com"]
+ ]
+}
