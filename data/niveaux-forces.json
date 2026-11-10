@@ -1,0 +1,6 @@
+{
+ "_info": "Niveaux décidés manuellement, prioritaires sur le calcul (clé : email ; valeur : Débutant, Intermédiaire ou Avancé). Le niveau s'applique à tous les emails de la même personne. Relance ensuite node scripts/build-data.mjs data/Sheet1.html.",
+ "niveaux": {
+  "emmanuelkpago1@gmail.com": "Avancé"
+ }
+}

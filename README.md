@@ -12,6 +12,7 @@
 - **Plusieurs emails pour une même personne** : regroupés automatiquement si le nom est identique (ordre libre), ou via `data/fusions.json` si le nom diffère. Tous les emails renvoient le même résultat (meilleure note par section) et le même nom.
 - **Section manquante** : estimée par régression à partir des sections faites (calibrée sur les personnes complètes) et marquée « estimé ».
 - **Score final /100** = (Reading + Structure + Writing) / 90 × 100. **Niveau** : < 50 Débutant · 50–79,9 Intermédiaire · ≥ 80 Avancé.
+- **Niveaux forcés** : `data/niveaux-forces.json` (email → niveau) prime sur le calcul, pour tous les emails de la personne. Le score affiché n'est pas modifié.
 - **Exclus** : même calcul, avec la mention « Session interrompue » et le motif.
 - **Aucune réponse** : niveau Débutant (niveau de départ).
 - Jamais exposés : infractions, durée, détail brut, nombre de mots, texte du Writing.

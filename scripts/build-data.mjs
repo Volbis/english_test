@@ -203,6 +203,16 @@ for (const k of KEYS) {
   err[k] = e.reduce((a, b) => a + b, 0) / e.length;
 }
 
+// Niveaux décidés manuellement (prioritaires sur le calcul) : data/niveaux-forces.json
+const forcesFile = path.join(path.dirname(input), 'niveaux-forces.json');
+const forces = fs.existsSync(forcesFile) ? (JSON.parse(fs.readFileSync(forcesFile, 'utf8')).niveaux || {}) : {};
+const NIVEAUX = ['Débutant', 'Intermédiaire', 'Avancé'];
+const forceInconnus = [];
+for (const [e, n] of Object.entries(forces)) {
+  if (!(e.toLowerCase() in byEmail)) forceInconnus.push(e);
+  if (!NIVEAUX.includes(n)) { console.error(`niveaux-forces.json : niveau invalide « ${n} » pour ${e} (attendu : ${NIVEAUX.join(', ')})`); process.exit(1); }
+}
+
 /* ---------- Résultat final ---------- */
 const LABEL = { R: ['reading', 'Reading'], S: ['structure', 'Structure'], W: ['writing', 'Writing'] };
 const niveau = sc => (sc >= 80 ? 'Avancé' : sc >= 50 ? 'Intermédiaire' : 'Débutant');
@@ -226,7 +236,8 @@ for (const p of persons) {
   if (p.list.length > 1) stats.fusions++;
   if (p.exclu) stats.exclus++;
 
-  const rec = { score, niveau: niveau(score), base, sections };
+  const force = p.list.map(a => forces[a.email]).find(Boolean);
+  const rec = { score, niveau: force || niveau(score), base, sections };
   if (p.list.length > 1) rec.passages = p.list.length;
   if (p.exclu) { rec.exclu = true; rec.motif = p.motif; }
   if (p.correction) rec.correction = p.correction;
@@ -249,5 +260,7 @@ console.log(`  Bases : ${stats.complet} complètes, ${stats.estime} avec section
 console.log(`  ${stats.fusions} personne(s) inscrite(s) sous plusieurs emails fusionnée(s) · ${stats.exclus} exclue(s) avec résultat attribué.`);
 console.log(`  Régression calibrée sur ${complete.length} personnes complètes · écart moyen d'estimation (sur 30) : Reading ±${err.R.toFixed(1)}, Structure ±${err.S.toFixed(1)}, Writing ±${err.W.toFixed(1)}.`);
 console.log(`  Niveaux (par personne) : ${Object.entries(dist).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
+if (Object.keys(forces).length) console.log(`  ${Object.keys(forces).length} niveau(x) forcé(s) manuellement (niveaux-forces.json).`);
+if (forceInconnus.length) console.warn(`⚠ niveaux-forces.json : email(s) absent(s) de la base : ${forceInconnus.join(', ')}`);
 if (fusionInconnus.length) console.warn(`⚠ fusions.json : email(s) absent(s) de la base : ${fusionInconnus.join(', ')}`);
 if (sansNote.length) console.warn(`⚠ ${sansNote.length} Writing rendu(s) sans note (à ajouter dans writing-grades.json) : ${sansNote.slice(0, 5).join(', ')}`);
