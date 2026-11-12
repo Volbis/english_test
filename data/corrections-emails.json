@@ -1,0 +1,10 @@
+{
+ "_info": "Corrections appliquées aux emails des fichiers de résultats. « retires » : comptes ignorés (comptes de test). « corriges » : email mal saisi → email correct ; le résultat est accessible avec les deux adresses. Relance ensuite node scripts/build-data.mjs data/Sheet1.html data/session2.csv.",
+ "retires": [
+  "ibr@gmail.com"
+ ],
+ "corriges": {
+  "kouakoujeanemmanuelkoffi35@gami.com": "kouakoujeanemmanuelkoffi35@gmail.com",
+  "mariekvictoire@mail.com": "mariekvictoire@gmail.com"
+ }
+}

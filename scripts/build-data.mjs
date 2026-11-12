@@ -1,6 +1,7 @@
 // Construit data/results.json à partir de la base de résultats.
 // Usage : node scripts/build-data.mjs data/Sheet1.html   (export Google Sheets « Page Web »)
 //         node scripts/build-data.mjs export.tsv         (TSV/CSV avec en-tête)
+//         node scripts/build-data.mjs data/Sheet1.html data/session2.csv   (plusieurs sessions, cumulées)
 //
 // Principe : chaque personne reçoit un résultat final, sans exception.
 //  1. Sections réellement passées : Reading > 0, Structure > 1,3 (1/24 = valeur plancher d'une section non faite),
@@ -14,13 +15,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const input = process.argv[2] || 'data/Sheet1.html';
-if (!fs.existsSync(input)) {
-  console.error(`Fichier introuvable : ${input}\nUsage : node scripts/build-data.mjs data/Sheet1.html`);
-  process.exit(1);
+// Plusieurs fichiers possibles (une session par fichier) : node scripts/build-data.mjs data/Sheet1.html data/session2.csv
+const inputs = process.argv.length > 2 ? process.argv.slice(2) : ['data/Sheet1.html'];
+for (const f of inputs) {
+  if (!fs.existsSync(f)) {
+    console.error(`Fichier introuvable : ${f}\nUsage : node scripts/build-data.mjs data/Sheet1.html [data/session2.csv …]`);
+    process.exit(1);
+  }
 }
-const raw = fs.readFileSync(input, 'utf8').replace(/^﻿/, '');
-const isHtml = /\.html?$/i.test(input) || /^\s*<(!doctype|html|meta|table|style)/i.test(raw);
+const input = inputs[0]; // writing-grades.json, fusions.json… sont lus dans son dossier
 
 /* ---------- Lecture ---------- */
 function decode(s) {
@@ -62,27 +65,46 @@ function parseDelimited(text) {
   return rows.filter(r => r.some(x => x.trim() !== ''));
 }
 
-const rows = isHtml ? parseHtml(raw) : parseDelimited(raw);
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9/ ]/g, '').trim();
-const H = rows.shift().map(norm);
-const find = pred => H.findIndex(pred);
-const idx = {
-  nom: find(h => h === 'nom'),
-  email: find(h => h === 'email'),
-  statut: find(h => h === 'statut'),
-  reading: find(h => h.startsWith('reading')),
-  structure: find(h => h.startsWith('structure')),
-  writing30: find(h => h.startsWith('writing') && h.includes('/30')),
-  writing10: find(h => h.startsWith('writing') && h.includes('/10')),
-  mots: find(h => h === 'mots'),
-  correction: find(h => h === 'correction' || h.startsWith('commentaire')),
-};
-const missing = ['nom', 'email', 'reading', 'structure'].filter(k => idx[k] < 0);
-if (missing.length) {
-  console.error('Colonnes introuvables : ' + missing.join(', ') + '\nEn-têtes lus : ' + H.join(' | '));
-  process.exit(1);
+// Export brut sans ligne d'en-tête (20 colonnes, ex. data/session2.csv) : ordre des colonnes de l'application de test
+const EN_TETE_BRUT = ['Date', 'Nom', 'Email', 'Statut', 'Reading /30', 'Listening', 'Structure /30', 'Writing /10', 'Writing /30',
+  'Speaking /30', 'Score /100', 'Niveau', 'Correction', 'Infractions', 'Duree', 'Detail brut', 'Mots', 'Texte du Writing',
+  'Journal des infractions', 'ID'].map(norm);
+const FIELDS = ['nom', 'email', 'statut', 'reading', 'structure', 'writing30', 'writing10', 'mots', 'correction'];
+const records = []; // une entrée par ligne, tous fichiers confondus : { nom, email, statut, … } (texte brut)
+for (const file of inputs) {
+  const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const isHtml = /\.html?$/i.test(file) || /^\s*<(!doctype|html|meta|table|style)/i.test(raw);
+  const rows = isHtml ? parseHtml(raw) : parseDelimited(raw);
+  let H = rows[0].map(norm);
+  if (H.includes('email')) rows.shift();
+  else if (rows[0].length === EN_TETE_BRUT.length && rows[0].some(c => /@/.test(c))) H = EN_TETE_BRUT;
+  else {
+    console.error(`${file} : ligne d'en-tête introuvable (aucune colonne « Email ») et format brut non reconnu.`);
+    process.exit(1);
+  }
+  const find = pred => H.findIndex(pred);
+  const idx = {
+    nom: find(h => h === 'nom'),
+    email: find(h => h === 'email'),
+    statut: find(h => h === 'statut'),
+    reading: find(h => h.startsWith('reading')),
+    structure: find(h => h.startsWith('structure')),
+    writing30: find(h => h.startsWith('writing') && h.includes('/30')),
+    writing10: find(h => h.startsWith('writing') && h.includes('/10')),
+    mots: find(h => h === 'mots'),
+    correction: find(h => h === 'correction' || h.startsWith('commentaire')),
+  };
+  const missing = ['nom', 'email', 'reading', 'structure'].filter(k => idx[k] < 0);
+  if (missing.length) {
+    console.error(`${file} : colonnes introuvables : ` + missing.join(', ') + '\nEn-têtes lus : ' + H.join(' | '));
+    process.exit(1);
+  }
+  const session = inputs.indexOf(file);
+  for (const r of rows) records.push({ session, ...Object.fromEntries(FIELDS.map(k => [k, idx[k] >= 0 ? (r[idx[k]] ?? '').trim() : ''])) });
+  console.log(`  ${file} : ${rows.length} ligne(s)`);
 }
-const get = (r, k) => (idx[k] >= 0 ? (r[idx[k]] ?? '').trim() : '');
+const get = (r, k) => r[k];
 const num = v => {
   if (v === '') return null;
   const n = parseFloat(v.replace(',', '.'));
@@ -102,11 +124,21 @@ const EXCLUSION = [
 const STATE_WORD = /^(PROVISOIRE|D[EÉ]FINITIF|FINAL|VALID[EÉ]|EN COURS)$/i;
 const PLANCHER_S = 1.3; // 1/24 : valeur enregistrée quand la section Structure n'a pas été faite
 
-let skipped = 0;
+// Comptes de test retirés et emails mal saisis corrigés : data/corrections-emails.json
+const corrFile = path.join(path.dirname(input), 'corrections-emails.json');
+const corr = fs.existsSync(corrFile) ? JSON.parse(fs.readFileSync(corrFile, 'utf8')) : {};
+const retires = new Set((corr.retires || []).map(e => e.trim().toLowerCase()));
+const corriges = Object.fromEntries(Object.entries(corr.corriges || {}).map(([a, b]) => [a.trim().toLowerCase(), b.trim().toLowerCase()]));
+const vus = new Set();
+
+let skipped = 0, retiresVus = 0;
 const sansNote = [];
 const attempts = [];
-for (const r of rows) {
-  const email = get(r, 'email').toLowerCase();
+for (const r of records) {
+  const emailSaisi = get(r, 'email').toLowerCase();
+  vus.add(emailSaisi);
+  if (retires.has(emailSaisi)) { retiresVus++; continue; }
+  const email = corriges[emailSaisi] || emailSaisi;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped++; continue; }
   const statut = get(r, 'statut');
   const R = num(get(r, 'reading')), S = num(get(r, 'structure'));
@@ -114,10 +146,11 @@ for (const r of rows) {
   let W = num(get(r, 'writing30'));
   if (W === null && num(get(r, 'writing10')) !== null) W = num(get(r, 'writing10')) * 3;
   if (W === null && email in grades) W = grades[email];
+  if (W === null && emailSaisi in grades) W = grades[emailSaisi];
   if (W === null && mots > 0) sansNote.push(email);
   const correction = get(r, 'correction');
   attempts.push({
-    email, nom: get(r, 'nom').replace(/\s+/g, ' '),
+    email, emailSaisi, session: r.session, nom: get(r, 'nom').replace(/\s+/g, ' '),
     exclu: /^EXCLU/i.test(statut),
     motif: (EXCLUSION.find(([re]) => re.test(statut)) || [])[1] || null,
     R: R !== null && R > 0 ? R : null,
@@ -162,7 +195,11 @@ const persons = Object.values(groups).map(list => ({
 
 /* ---------- Régression : estimer une section à partir des autres ---------- */
 const KEYS = ['R', 'S', 'W'];
-const complete = persons.filter(p => KEYS.every(k => p[k] !== null));
+// Calibrée uniquement sur la première session (1er fichier) : ajouter une session ne modifie pas
+// les estimations déjà publiées des personnes qui ne l'ont pas repassée.
+const complete = persons
+  .map(p => { const l = p.list.filter(a => a.session === 0); return { R: maxOf(l, 'R'), S: maxOf(l, 'S'), W: maxOf(l, 'W') }; })
+  .filter(p => KEYS.every(k => p[k] !== null));
 if (complete.length < 10) {
   console.error(`Trop peu de personnes ayant passé les trois sections (${complete.length}) pour calibrer les estimations.`);
   process.exit(1);
@@ -243,7 +280,10 @@ for (const p of persons) {
   if (p.correction) rec.correction = p.correction;
   // Même nom affiché quel que soit l'email : la forme la plus complète
   const nom = p.list.map(a => a.nom).sort((x, y) => y.split(' ').length - x.split(' ').length || y.length - x.length)[0];
-  for (const a of p.list) out[a.email] = { nom, ...rec };
+  for (const a of p.list) {
+    out[a.email] = { nom, ...rec };
+    if (a.emailSaisi !== a.email) out[a.emailSaisi] = { nom, ...rec }; // l'adresse mal saisie reste utilisable
+  }
 }
 
 fs.mkdirSync('data', { recursive: true });
@@ -258,9 +298,12 @@ for (const p of persons) { const n = out[p.list[0].email].niveau; dist[n] = (dis
 console.log(`✓ ${Object.keys(out).length} emails · ${persons.length} personnes · 100 % avec un résultat (${skipped} ligne(s) sans email valide ignorée(s)).`);
 console.log(`  Bases : ${stats.complet} complètes, ${stats.estime} avec section(s) estimée(s), ${stats.defaut} sans aucune réponse (Débutant).`);
 console.log(`  ${stats.fusions} personne(s) inscrite(s) sous plusieurs emails fusionnée(s) · ${stats.exclus} exclue(s) avec résultat attribué.`);
-console.log(`  Régression calibrée sur ${complete.length} personnes complètes · écart moyen d'estimation (sur 30) : Reading ±${err.R.toFixed(1)}, Structure ±${err.S.toFixed(1)}, Writing ±${err.W.toFixed(1)}.`);
+console.log(`  Régression calibrée sur ${complete.length} personnes complètes (session 1) · écart moyen d'estimation (sur 30) : Reading ±${err.R.toFixed(1)}, Structure ±${err.S.toFixed(1)}, Writing ±${err.W.toFixed(1)}.`);
 console.log(`  Niveaux (par personne) : ${Object.entries(dist).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
 if (Object.keys(forces).length) console.log(`  ${Object.keys(forces).length} niveau(x) forcé(s) manuellement (niveaux-forces.json).`);
 if (forceInconnus.length) console.warn(`⚠ niveaux-forces.json : email(s) absent(s) de la base : ${forceInconnus.join(', ')}`);
+if (retiresVus || Object.keys(corriges).length) console.log(`  ${retiresVus} ligne(s) de compte de test retirée(s) · ${Object.keys(corriges).length} email(s) corrigé(s) (corrections-emails.json).`);
+const corrInconnus = [...retires, ...Object.keys(corriges)].filter(e => !vus.has(e));
+if (corrInconnus.length) console.warn(`⚠ corrections-emails.json : email(s) absent(s) des fichiers : ${corrInconnus.join(', ')}`);
 if (fusionInconnus.length) console.warn(`⚠ fusions.json : email(s) absent(s) de la base : ${fusionInconnus.join(', ')}`);
 if (sansNote.length) console.warn(`⚠ ${sansNote.length} Writing rendu(s) sans note (à ajouter dans writing-grades.json) : ${sansNote.slice(0, 5).join(', ')}`);
